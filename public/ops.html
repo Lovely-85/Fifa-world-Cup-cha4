@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FIFA World Cup 2026 — Ops Insight</title>
+  <meta name="description" content="Operational-intelligence briefing for FIFA World Cup 2026 venue staff and volunteers." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#refresh-btn">Skip to refresh control</a>
+
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">FIFA World Cup 2026 · Staff &amp; Volunteers</p>
+      <h1 class="brand">Ops Insight</h1>
+    </div>
+    <div style="display:flex; align-items:center; gap:0.6rem;">
+      <label class="visually-hidden" for="venue-select">Select venue</label>
+      <select id="venue-select" class="venue-select" aria-label="Select venue"></select>
+      <span id="mode-badge" class="mode-badge" data-mode="fallback" role="status">starting…</span>
+    </div>
+  </header>
+
+  <div class="venue-link-row"><a href="/index.html">← Back to Fan Assistant</a></div>
+
+  <main id="main-content">
+    <div class="ops-grid">
+      <section class="ops-card" aria-labelledby="briefing-heading">
+        <h2 id="briefing-heading">AI Briefing</h2>
+        <ol id="briefing-list" class="briefing-list" aria-live="polite"></ol>
+        <button id="refresh-btn" class="refresh-btn" type="button">Refresh briefing</button>
+      </section>
+
+      <section class="ops-card" aria-labelledby="gates-heading">
+        <h2 id="gates-heading">Gate status</h2>
+        <table class="ops-table">
+          <thead>
+            <tr><th scope="col">Gate</th><th scope="col">Density</th><th scope="col">Wait</th><th scope="col">Elevator</th></tr>
+          </thead>
+          <tbody id="gates-tbody"></tbody>
+        </table>
+      </section>
+
+      <section class="ops-card" aria-labelledby="transport-heading">
+        <h2 id="transport-heading">Transport</h2>
+        <table class="ops-table" id="transport-table">
+          <tbody id="transport-tbody"></tbody>
+        </table>
+      </section>
+
+      <section class="ops-card" aria-labelledby="access-heading">
+        <h2 id="access-heading">Accessibility</h2>
+        <p id="accessibility-note" style="font-size:0.85rem; color:var(--chalk-dim); margin:0;"></p>
+      </section>
+    </div>
+  </main>
+
+  <script src="/ops.js"></script>
+</body>
+</html>
