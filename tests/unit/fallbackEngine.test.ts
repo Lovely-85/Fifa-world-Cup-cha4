@@ -37,6 +37,18 @@ describe('generateFallbackResponse', () => {
     expect(result.matchedVenueId).toBe('gillette-boston');
     expect(result.intent).toBe('general');
   });
+
+  it('matches venue names even when the fan drops punctuation (apostrophe)', () => {
+    // Regression test: "Levis Stadium" (no apostrophe) must still resolve to
+    // "Levi's Stadium" -- found via manual testing before submission.
+    const result = generateFallbackResponse('I am at Levis Stadium, whats the least busy gate?');
+    expect(result.matchedVenueId).toBe('levis-bayarea');
+  });
+
+  it('matches venue names even when the fan drops punctuation (ampersand)', () => {
+    const result = generateFallbackResponse('Which gate at ATT Stadium has the shortest wait?');
+    expect(result.matchedVenueId).toBe('att-dallas');
+  });
 });
 
 describe('generateFallbackOpsBriefing', () => {

@@ -36,7 +36,10 @@ function buildCombinedInput(userMessage: string, history: ChatTurn[]): string {
   return `${transcriptBlock}FAN MESSAGE:\n${userMessage}`;
 }
 
-export async function getAssistantReply(userMessage: string, history: ChatTurn[] = []): Promise<AssistantReply> {
+export async function getAssistantReply(
+  userMessage: string,
+  history: ChatTurn[] = [],
+): Promise<AssistantReply> {
   if (isGeminiConfigured()) {
     try {
       const combinedInput = buildCombinedInput(userMessage, history);
@@ -65,7 +68,10 @@ function buildOpsDataSummary(venueId: string): string {
   const heat = isHeatAdvisoryActive(venueId);
 
   const gateLines = gates
-    .map((g) => `Gate ${g.gateId}: ${g.densityLevel} density (${g.densityPct}%), ${g.waitMinutes}min wait, elevator ${g.elevatorOperational ? 'operational' : 'down'}`)
+    .map(
+      (g) =>
+        `Gate ${g.gateId}: ${g.densityLevel} density (${g.densityPct}%), ${g.waitMinutes}min wait, elevator ${g.elevatorOperational ? 'operational' : 'down'}`,
+    )
     .join('\n');
 
   return [

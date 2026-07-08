@@ -45,7 +45,8 @@ export const VENUES: readonly Venue[] = [
     capacityApprox: 80000,
     timezone: 'America/Chicago',
     gateIds: ['A', 'B', 'C', 'D', 'E'],
-    operationalNotes: 'Retractable roof; heat-safety guidance still applies to outdoor concourses and parking lots.',
+    operationalNotes:
+      'Retractable roof; heat-safety guidance still applies to outdoor concourses and parking lots.',
     commonLanguages: ['Spanish'],
   },
   {
@@ -78,7 +79,8 @@ export const VENUES: readonly Venue[] = [
     capacityApprox: 76400,
     timezone: 'America/Chicago',
     gateIds: ['A', 'B', 'C', 'D'],
-    operationalNotes: 'Large surface parking lots; shuttle and rideshare coordination is a major logistics factor.',
+    operationalNotes:
+      'Large surface parking lots; shuttle and rideshare coordination is a major logistics factor.',
     commonLanguages: ['Spanish'],
   },
   {
@@ -100,7 +102,8 @@ export const VENUES: readonly Venue[] = [
     capacityApprox: 65300,
     timezone: 'America/New_York',
     gateIds: ['A', 'B', 'C', 'D'],
-    operationalNotes: 'Extreme heat and afternoon thunderstorm risk; weather-triggered shelter guidance matters.',
+    operationalNotes:
+      'Extreme heat and afternoon thunderstorm risk; weather-triggered shelter guidance matters.',
     commonLanguages: ['Spanish', 'Portuguese', 'Haitian Creole'],
   },
   {
@@ -111,7 +114,8 @@ export const VENUES: readonly Venue[] = [
     capacityApprox: 68500,
     timezone: 'America/Los_Angeles',
     gateIds: ['A', 'B', 'C', 'D'],
-    operationalNotes: 'Strong regional Caltrain/light-rail options; transit-first guidance reduces parking strain.',
+    operationalNotes:
+      'Strong regional Caltrain/light-rail options; transit-first guidance reduces parking strain.',
     commonLanguages: ['Spanish', 'Mandarin', 'Vietnamese'],
   },
   {
@@ -199,14 +203,13 @@ export const VENUES: readonly Venue[] = [
     capacityApprox: 45700,
     timezone: 'America/Toronto',
     gateIds: ['A', 'B', 'C', 'D'],
-    operationalNotes: 'Smallest-footprint venue; strict gate-by-ticket-sector routing reduces concourse crowding.',
+    operationalNotes:
+      'Smallest-footprint venue; strict gate-by-ticket-sector routing reduces concourse crowding.',
     commonLanguages: ['French', 'Punjabi', 'Mandarin'],
   },
 ];
 
-export const VENUE_BY_ID: ReadonlyMap<string, Venue> = new Map(
-  VENUES.map((venue) => [venue.id, venue]),
-);
+export const VENUE_BY_ID: ReadonlyMap<string, Venue> = new Map(VENUES.map((venue) => [venue.id, venue]));
 
 export function findVenue(venueId: string): Venue | undefined {
   return VENUE_BY_ID.get(venueId);

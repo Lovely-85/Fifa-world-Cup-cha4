@@ -8,15 +8,15 @@
 
 :root {
   /* Named palette */
-  --concourse-navy: #0b1220;   /* base background: stadium at night */
-  --concourse-panel: #16202e;  /* raised surface / card */
+  --concourse-navy: #0b1220; /* base background: stadium at night */
+  --concourse-panel: #16202e; /* raised surface / card */
   --concourse-panel-alt: #1c2836;
-  --chalk: #f5f7fa;            /* primary text */
-  --chalk-dim: #a9b4c4;        /* secondary text */
-  --touchline-green: #1e8f5e;  /* status: good / low density */
+  --chalk: #f5f7fa; /* primary text */
+  --chalk-dim: #a9b4c4; /* secondary text */
+  --touchline-green: #1e8f5e; /* status: good / low density */
   --touchline-green-bright: #2fbd85;
   --floodlight-amber: #f2a93b; /* status: caution / moderate-high density */
-  --alert-red: #e5484d;        /* status: critical density only */
+  --alert-red: #e5484d; /* status: critical density only */
   --hairline: #2a3547;
 
   --font-display: 'Archivo Black', 'Arial Black', sans-serif;
@@ -205,8 +205,13 @@ textarea {
 }
 
 @keyframes pulse-ring {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.55); }
-  50% { box-shadow: 0 0 0 5px rgba(229, 72, 77, 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(229, 72, 77, 0);
+  }
 }
 
 .gate-meta {
@@ -253,8 +258,14 @@ main {
 }
 
 @keyframes msg-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .msg.fan {

@@ -59,6 +59,43 @@ interface InteractionLike {
   steps?: InteractionStep[];
 }
 
+/**
+ * Local mirror of the slice of the Gemini Interactions API's step
+ * wire-format this project actually constructs or reads.
+ *
+ * As of @google/genai@2.10.0, the SDK's own `Step`/`Tool` request types are
+ * internal implementation details, not part of its public type export
+ * surface (verified directly against the vendored
+ * node_modules/@google/genai/dist/node/node.d.ts -- there is no exported
+ * `Step` or `Tool` symbol to import). Rather than typing the conversation
+ * history as a blanket `any` -- which the Google TypeScript Style Guide
+ * (google.github.io/styleguide/tsguide.html) specifically calls out as
+ * unsafe, since it silences the compiler without any runtime check -- this
+ * type gives every step a precise, locally-verified shape. The single
+ * unavoidable cast to the SDK's own wider parameter type is isolated to one
+ * commented line in callInteractions() below, rather than spread across the
+ * module.
+ */
+interface TextBlock {
+  type: 'text';
+  text: string;
+}
+
+interface UserInputStep {
+  type: 'user_input';
+  content: TextBlock[];
+}
+
+interface FunctionResultRequestStep {
+  type: 'function_result';
+  name: string;
+  call_id: string;
+  is_error: boolean;
+  result: TextBlock[];
+}
+
+type ConversationStep = UserInputStep | FunctionResultRequestStep | InteractionStep;
+
 function extractFinalText(interaction: InteractionLike): string {
   if (interaction.output_text && interaction.output_text.trim().length > 0) {
     return interaction.output_text.trim();
@@ -88,6 +125,53 @@ export interface GeminiRunResult {
 }
 
 /**
+ * The SDK's own parameter type for `interactions.create()`, derived
+ * directly from its declared method signature via TypeScript's `Parameters`
+ * utility rather than hand-typed. This keeps the one necessary boundary
+ * cast (see `callInteractions` below) tied to whatever the installed SDK
+ * version actually declares, instead of a static guess that could silently
+ * drift from a future `@google/genai` upgrade.
+ */
+type InteractionsCreateParams = Parameters<GoogleGenAI['interactions']['create']>[0];
+
+interface CreateInteractionOptions {
+  systemInstruction: string;
+  input: string | ConversationStep[];
+  withTools: boolean;
+}
+
+/**
+ * The one place in this module that talks to the SDK's `create()` method.
+ * Isolating the call here means the not-publicly-typed request shape needs
+ * exactly one justified, commented cast (see below), instead of `any`
+ * leaking into every function that needs to make a Gemini call.
+ */
+async function callInteractions(options: CreateInteractionOptions): Promise<InteractionLike> {
+  const ai = getClient();
+  const params = {
+    model: env.GEMINI_MODEL,
+    store: false,
+    system_instruction: options.systemInstruction,
+    input: options.input,
+    ...(options.withTools ? { tools: TOOL_DECLARATIONS } : {}),
+  };
+
+  // `ConversationStep`/`TOOL_DECLARATIONS` above are this project's own
+  // precise, hand-verified mirror of the Interactions API wire format (see
+  // the comment on ConversationStep). The SDK's request-side `Step`/`Tool`
+  // types are not part of its public export surface as of
+  // @google/genai@2.10.0, so a single cast to the SDK's own declared
+  // parameter type is the trust boundary -- not a loosely-typed `any`.
+  const sdkParams = params as unknown as InteractionsCreateParams;
+
+  return withTimeout(
+    ai.interactions.create(sdkParams),
+    REQUEST_TIMEOUT_MS,
+    'Gemini interactions.create',
+  ) as Promise<InteractionLike>;
+}
+
+/**
  * Runs one fan message through Gemini with tool-calling enabled, executing
  * up to MAX_TOOL_ROUNDS rounds of function calls before forcing a final
  * answer. `combinedInput` should already include any prior-turn context the
@@ -99,24 +183,15 @@ export async function runFanAssistantTurn(
   systemInstruction: string,
   combinedInput: string,
 ): Promise<GeminiRunResult> {
-  const ai = getClient();
   const toolCalls: ToolCallLogEntry[] = [];
 
-  let history: any[] = [{ type: 'user_input', content: [{ type: 'text', text: combinedInput }] }]; // eslint-disable-line @typescript-eslint/no-explicit-any
+  let history: ConversationStep[] = [
+    { type: 'user_input', content: [{ type: 'text', text: combinedInput }] },
+  ];
   let interaction: InteractionLike | null = null;
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round += 1) {
-    interaction = (await withTimeout(
-      ai.interactions.create({
-        model: env.GEMINI_MODEL,
-        store: false,
-        system_instruction: systemInstruction,
-        input: history,
-        tools: TOOL_DECLARATIONS as any, // eslint-disable-line @typescript-eslint/no-explicit-any
-      }),
-      REQUEST_TIMEOUT_MS,
-      'Gemini interactions.create',
-    )) as InteractionLike;
+    interaction = await callInteractions({ systemInstruction, input: history, withTools: true });
 
     history = [...history, ...(interaction.steps ?? [])];
 
@@ -156,17 +231,7 @@ export async function runFanAssistantTurn(
  * data itself and only needs it summarized into a short staff briefing.
  */
 export async function runSimpleCompletion(systemInstruction: string, input: string): Promise<string> {
-  const ai = getClient();
-  const interaction = (await withTimeout(
-    ai.interactions.create({
-      model: env.GEMINI_MODEL,
-      store: false,
-      system_instruction: systemInstruction,
-      input,
-    }),
-    REQUEST_TIMEOUT_MS,
-    'Gemini interactions.create',
-  )) as InteractionLike;
+  const interaction = await callInteractions({ systemInstruction, input, withTools: false });
 
   const text = extractFinalText(interaction);
   if (!text) {

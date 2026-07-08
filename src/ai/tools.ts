@@ -82,7 +82,8 @@ export const TOOL_DECLARATIONS = [
   {
     type: 'function',
     name: 'get_transport_options',
-    description: 'Returns simulated shuttle ETA, parking occupancy, transit status and rideshare wait for a venue.',
+    description:
+      'Returns simulated shuttle ETA, parking occupancy, transit status and rideshare wait for a venue.',
     parameters: {
       type: 'object',
       properties: { venueId: { type: 'string', description: 'Venue id from list_venues.' } },

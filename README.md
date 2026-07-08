@@ -1,5 +1,7 @@
 # FIFA World Cup 2026 Fan Assistant
 
+![CI](https://github.com/SriRamkunamsetty/worldcup-fan-assistant/actions/workflows/ci.yml/badge.svg)
+
 A multilingual, accessibility-first, GenAI-powered navigation and crowd-safety assistant for fans at any of the 16 FIFA World Cup 2026 host venues — with a secondary staff/volunteer **Ops Insight** view that reuses the same reasoning engine for real-time operational intelligence.
 
 Built for the **Smart Stadiums & Tournament Operations** PromptWars challenge.
@@ -36,6 +38,14 @@ Built for the **Smart Stadiums & Tournament Operations** PromptWars challenge.
 It is easy to build a stadium app that *looks* AI-driven but is really just threshold logic (`if density > 80: say "busy"`) with no model in the loop. This project deliberately avoids that: the fan-facing assistant is a genuine Gemini **tool-calling** loop (Google's Interactions API) — the model decides *which* tools to call based on what the fan actually said (their stated mobility needs, urgency, language), not a fixed script. See `src/ai/geminiClient.ts` and `src/ai/tools.ts`.
 
 The one part of the app that *is* deterministic on purpose is the **live venue data** (`src/data/liveState.ts`): there is no public real-time feed for FIFA 2026 gate-level crowd density, so it is simulated with a seeded, bounded, pure function of `(venue, gate, minute)`. That's a modeling choice, documented in §5, not a shortcut around using GenAI.
+
+### Engineering standards this codebase was checked against
+
+Rather than guessing at what "production quality" means, this codebase was explicitly checked against Google's own published engineering standards:
+
+- **[Google's Engineering Practices / code review standard](https://google.github.io/eng-practices/review/reviewer/standard.html):** "could the code be made simpler," consistency with the rest of the codebase, and well-designed automated tests weigh more than personal style preference.
+- **[Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html):** it explicitly calls type assertions like `as SomeType` "unsafe," since they silence the compiler without a runtime check. Concretely, `src/` has **zero `any` types**. The one place an external SDK's request-side shapes aren't part of its public export surface (`@google/genai`'s `Step`/`Tool` types — verified directly against the vendored `.d.ts`, not assumed), `src/ai/geminiClient.ts` defines a precise local mirror type and isolates the one unavoidable boundary cast to a single commented line, derived from the SDK's own declared signature via TypeScript's `Parameters<>` utility rather than a hand-typed guess.
+- **[gts](https://github.com/google/gts)**, "Google's TypeScript style guide, formatter, and linter," is what Google's own Node.js client libraries are formatted and linted with. This project mirrors that discipline with Prettier + ESLint enforced in CI (`.github/workflows/ci.yml`) on every push, rather than left to manual review.
 
 ### Graceful degradation is a first-class design goal
 
@@ -97,11 +107,14 @@ npm start                   # http://localhost:3000
 ### Testing
 
 ```bash
-npm test              # 70 unit + integration tests
+npm test              # 78 unit + integration tests
 npm run test:coverage # coverage report
 npm run lint          # ESLint (TypeScript + the vanilla JS frontend)
+npm run format:check  # Prettier
 npm run typecheck     # tsc --noEmit
 ```
+
+All five checks above (plus the build) run automatically in GitHub Actions on every push — see `.github/workflows/ci.yml` and `CONTRIBUTING.md`.
 
 Unit tests cover the live-data engine (determinism + bounds), every AI tool (valid/invalid input), the fallback engine's venue/intent matching, the Gemini tool-calling loop (SDK mocked, no network needed), and the graceful-degradation orchestration layer. Integration tests exercise the real Express app end-to-end with Supertest, including validation, 404s, and security headers.
 
@@ -121,7 +134,11 @@ See [`SECURITY.md`](./SECURITY.md) for the full write-up (OWASP Top 10 for LLM A
 
 ## 8. Efficiency
 
-- The live-data engine is O(1) per gate lookup (hash + PRNG, no loops over history) and O(gates) for venue-wide queries — at most 6 gates per venue.
+- **One seeded PRNG stream per gate-per-minute, not four.** `src/data/liveState.ts` used to re-hash and re-seed a new generator for every individual field (density, wait, elevator, shuttle); it now seeds one stream per key and draws four sequential values from it — a straightforward 4x reduction in hashing work per gate snapshot, with no change to determinism or bounds (see the updated tests in `tests/unit/liveState.test.ts`).
+- **A small, bounded memoization cache** (`gateSnapshotCache` / `transportSnapshotCache`, capped at 500 entries with oldest-first eviction) serves repeat reads within the same minute — e.g. the fan chat and the staff Ops Insight briefing asking about the same gate seconds apart — from cache instead of recomputing. Two tests assert this by checking for the *same object reference* on a repeat call, not just an equal value, to actually prove the cache path is exercised.
+- **Gzip/brotli response compression** (`compression` middleware) on every response, API and static alike.
+- **HTTP caching headers**: static JS/CSS get `Cache-Control: public, max-age=600`; the static 16-venue list (`GET /api/venues`) gets `max-age=60` since it cannot change within a process lifetime; the two HTML entry points and every live/dynamic endpoint (`/status`, `/insight`, `/chat`) are explicitly `no-cache` so nothing stale is ever served for data that's supposed to be live.
+- The live-data engine is O(1) per gate lookup and O(gates) for venue-wide queries — at most 6 gates per venue.
 - A 12-second timeout and a 3-round cap bound every Gemini call so a slow or looping model response can never hang a request.
 - `express.json({ limit: '32kb' })` and per-endpoint rate limiting bound both memory and Gemini API cost per request.
 - The frontend is framework-free static assets (no bundler, no hydration) — the entire `public/` directory is a few KB.

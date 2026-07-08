@@ -38,6 +38,15 @@ describe('getGateSnapshot', () => {
     const b = getGateSnapshot('sofi-la', 'A', FIXED_TIME + 5 * 60_000);
     expect(a).not.toEqual(b);
   });
+
+  it('serves repeat reads within the same minute from cache (same object reference)', () => {
+    // Proves the memoization layer is actually hit, not just that the pure
+    // function happens to be deterministic -- a fresh computation would
+    // produce an equal but distinct object each time.
+    const a = getGateSnapshot('att-dallas', 'B', FIXED_TIME);
+    const b = getGateSnapshot('att-dallas', 'B', FIXED_TIME);
+    expect(a).toBe(b);
+  });
 });
 
 describe('getVenueGateSnapshots / getLeastCrowdedGate', () => {
@@ -72,6 +81,12 @@ describe('getTransportSnapshot', () => {
 
   it('returns null for an unknown venue', () => {
     expect(getTransportSnapshot('not-a-venue', FIXED_TIME)).toBeNull();
+  });
+
+  it('serves repeat reads within the same minute from cache (same object reference)', () => {
+    const a = getTransportSnapshot('sofi-la', FIXED_TIME);
+    const b = getTransportSnapshot('sofi-la', FIXED_TIME);
+    expect(a).toBe(b);
   });
 });
 

@@ -48,7 +48,9 @@ describe('runFanAssistantTurn', () => {
     mockCreate
       .mockResolvedValueOnce({
         output_text: '',
-        steps: [{ type: 'function_call', id: 'call_2', name: 'get_gate_status', arguments: { venueId: 'nope' } }],
+        steps: [
+          { type: 'function_call', id: 'call_2', name: 'get_gate_status', arguments: { venueId: 'nope' } },
+        ],
       })
       .mockResolvedValueOnce({ output_text: 'That venue does not exist.', steps: [] });
 

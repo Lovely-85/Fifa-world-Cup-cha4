@@ -73,10 +73,19 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-/** Deterministic pseudo-random number in [min, max) seeded by `key`. */
-function seededRange(key: string, min: number, max: number): number {
-  const rand = mulberry32(hashString(key))();
-  return min + rand * (max - min);
+/**
+ * Returns a seeded, repeatable pseudo-random stream for `key`. Callers draw
+ * as many sequential values as they need from the *same* stream instead of
+ * re-hashing a new seed per field -- e.g. one gate snapshot needs four
+ * numbers (density, wait, elevator, shuttle), so this does one string hash
+ * instead of four.
+ */
+function createSeededStream(key: string): () => number {
+  return mulberry32(hashString(key));
+}
+
+function scale(unitValue: number, min: number, max: number): number {
+  return min + unitValue * (max - min);
 }
 
 function clamp(value: number, min: number, max: number): number {
@@ -94,6 +103,35 @@ function densityLevelFromPct(pct: number): DensityLevel {
   return 'low';
 }
 
+/**
+ * Small bounded memoization cache. Since every value in this module is a
+ * pure function of (id, minute-bucket), the same key is frequently
+ * requested more than once within the same minute -- e.g. the fan chat's
+ * `get_gate_status` tool and the staff Ops Insight briefing may both ask
+ * about the same gate within seconds of each other. Caching avoids
+ * redundant PRNG work for those repeat reads. The size cap (with simple
+ * oldest-first eviction) bounds memory instead of growing forever as new
+ * minute buckets roll in, which matters more for a long-running process
+ * than the couple hundred bytes any one entry costs.
+ */
+const MAX_CACHE_ENTRIES_PER_MAP = 500;
+
+function memoize<T>(cache: Map<string, T>, key: string, compute: () => T): T {
+  const cached = cache.get(key);
+  if (cached !== undefined) return cached;
+
+  const value = compute();
+  if (cache.size >= MAX_CACHE_ENTRIES_PER_MAP) {
+    const oldestKey = cache.keys().next().value;
+    if (oldestKey !== undefined) cache.delete(oldestKey);
+  }
+  cache.set(key, value);
+  return value;
+}
+
+const gateSnapshotCache = new Map<string, GateSnapshot>();
+const transportSnapshotCache = new Map<string, TransportSnapshot>();
+
 export function getGateSnapshot(
   venueId: string,
   gateId: string,
@@ -104,25 +142,25 @@ export function getGateSnapshot(
 
   const bucket = minuteBucket(now);
   const key = `${venueId}:${gateId}:${bucket}`;
-  const densityPct = clamp(Math.round(seededRange(`${key}:density`, 15, 98)), 0, 100);
-  const waitMinutes = clamp(Math.round((densityPct / 100) * 22 + seededRange(`${key}:wait`, 0, 4)), 0, 45);
-  const elevatorOperational = seededRange(`${key}:elevator`, 0, 1) > 0.08; // ~92% uptime
-  const wheelchairShuttleWaitMinutes = clamp(
-    Math.round(seededRange(`${key}:shuttle`, 2, 12)),
-    0,
-    30,
-  );
 
-  return {
-    venueId,
-    gateId,
-    densityPct,
-    densityLevel: densityLevelFromPct(densityPct),
-    waitMinutes,
-    elevatorOperational,
-    wheelchairShuttleWaitMinutes,
-    asOfMinuteBucket: bucket,
-  };
+  return memoize(gateSnapshotCache, key, () => {
+    const rand = createSeededStream(key);
+    const densityPct = clamp(Math.round(scale(rand(), 15, 98)), 0, 100);
+    const waitMinutes = clamp(Math.round((densityPct / 100) * 22 + scale(rand(), 0, 4)), 0, 45);
+    const elevatorOperational = rand() > 0.08; // ~92% uptime
+    const wheelchairShuttleWaitMinutes = clamp(Math.round(scale(rand(), 2, 12)), 0, 30);
+
+    return {
+      venueId,
+      gateId,
+      densityPct,
+      densityLevel: densityLevelFromPct(densityPct),
+      waitMinutes,
+      elevatorOperational,
+      wheelchairShuttleWaitMinutes,
+      asOfMinuteBucket: bucket,
+    };
+  });
 }
 
 export function getVenueGateSnapshots(venueId: string, now: number = Date.now()): GateSnapshot[] {
@@ -155,21 +193,25 @@ export function getTransportSnapshot(venueId: string, now: number = Date.now()):
 
   const bucket = minuteBucket(now);
   const key = `${venueId}:transport:${bucket}`;
-  const parkingOccupancyPct = clamp(Math.round(seededRange(`${key}:parking`, 40, 100)), 0, 100);
-  const shuttleEtaMinutes = clamp(Math.round(seededRange(`${key}:shuttle`, 3, 20)), 1, 40);
-  const rideshareZoneWaitMinutes = clamp(Math.round(seededRange(`${key}:rideshare`, 4, 25)), 1, 45);
-  const transitRoll = seededRange(`${key}:transit`, 0, 1);
-  const transitStatus: TransportSnapshot['transitStatus'] =
-    transitRoll > 0.93 ? 'disrupted' : transitRoll > 0.75 ? 'minor_delay' : 'normal';
 
-  return {
-    venueId,
-    shuttleEtaMinutes,
-    parkingOccupancyPct,
-    transitStatus,
-    rideshareZoneWaitMinutes,
-    asOfMinuteBucket: bucket,
-  };
+  return memoize(transportSnapshotCache, key, () => {
+    const rand = createSeededStream(key);
+    const parkingOccupancyPct = clamp(Math.round(scale(rand(), 40, 100)), 0, 100);
+    const shuttleEtaMinutes = clamp(Math.round(scale(rand(), 3, 20)), 1, 40);
+    const rideshareZoneWaitMinutes = clamp(Math.round(scale(rand(), 4, 25)), 1, 45);
+    const transitRoll = rand();
+    const transitStatus: TransportSnapshot['transitStatus'] =
+      transitRoll > 0.93 ? 'disrupted' : transitRoll > 0.75 ? 'minor_delay' : 'normal';
+
+    return {
+      venueId,
+      shuttleEtaMinutes,
+      parkingOccupancyPct,
+      transitStatus,
+      rideshareZoneWaitMinutes,
+      asOfMinuteBucket: bucket,
+    };
+  });
 }
 
 export function getAccessibilityInfo(venueId: string, now: number = Date.now()): AccessibilityInfo | null {
@@ -195,7 +237,8 @@ export function isHeatAdvisoryActive(venueId: string, now: number = Date.now()):
   const venue = findVenue(venueId);
   if (!venue) return false;
   const notesLower = venue.operationalNotes.toLowerCase();
-  const heatSensitive = notesLower.includes('heat') || notesLower.includes('humid') || notesLower.includes('altitude');
+  const heatSensitive =
+    notesLower.includes('heat') || notesLower.includes('humid') || notesLower.includes('altitude');
   if (!heatSensitive) return false;
 
   const localHour = new Date(now).getUTCHours(); // coarse approximation, documented assumption

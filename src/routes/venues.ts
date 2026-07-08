@@ -14,6 +14,11 @@ const venueParamSchema = z.object({ venueId: z.string().trim().min(1).max(64) })
 export const venuesRouter = Router();
 
 venuesRouter.get('/', (_req, res) => {
+  // The 16-venue list is fixed reference data for the lifetime of the
+  // process (see src/data/venues.ts) -- unlike /status below, it is safe
+  // and worthwhile to let clients and any intermediate cache reuse this
+  // response for a short window instead of re-fetching it every load.
+  res.set('Cache-Control', 'public, max-age=60');
   res.json(listVenueSummaries());
 });
 

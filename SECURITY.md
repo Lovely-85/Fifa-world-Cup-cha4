@@ -33,7 +33,7 @@ Every Gemini call sets `store: false`. No fan conversation is retained on Google
 - **No secrets in the client**: `GEMINI_API_KEY` is read only server-side (`src/config/env.ts`) and is never sent to, or readable by, the browser.
 - **Fail-safe environment validation**: all configuration is parsed and validated once at startup with `zod` (`src/config/env.ts`); the process refuses to start with an invalid configuration rather than running in an undefined state.
 - **No internal error leakage**: the centralized error handler (`src/middleware/errorHandler.ts`) logs full error details server-side but only ever returns a generic message to the client (with a `debug` field enabled outside `NODE_ENV=production`, never in production).
-- **Dependency hygiene**: `npm install` was run against the current registry with `npm audit` reporting 0 vulnerabilities at submission time; the dependency list is deliberately small (7 runtime dependencies).
+- **Dependency hygiene**: `npm install` was run against the current registry with `npm audit` reporting 0 vulnerabilities at submission time; the dependency list is deliberately small (8 runtime dependencies).
 
 ## Reporting
 

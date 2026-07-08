@@ -31,7 +31,17 @@ export interface FallbackResult {
 
 const ACCESSIBILITY_KEYWORDS = ['wheelchair', 'accessib', 'disab', 'mobility', 'sensory', 'deaf', 'blind'];
 const GATE_KEYWORDS = ['gate', 'crowd', 'busy', 'line', 'queue', 'entrance', 'entry'];
-const TRANSPORT_KEYWORDS = ['parking', 'shuttle', 'transit', 'bus', 'train', 'uber', 'lyft', 'rideshare', 'taxi'];
+const TRANSPORT_KEYWORDS = [
+  'parking',
+  'shuttle',
+  'transit',
+  'bus',
+  'train',
+  'uber',
+  'lyft',
+  'rideshare',
+  'taxi',
+];
 const SUSTAINABILITY_KEYWORDS = ['eco', 'sustainab', 'carbon', 'green', 'emission'];
 
 function detectIntent(lowerText: string): Intent {
@@ -42,13 +52,28 @@ function detectIntent(lowerText: string): Intent {
   return 'general';
 }
 
+/**
+ * Strips punctuation so venue matching survives the punctuation people
+ * routinely drop when typing casually on a phone -- "Levis Stadium" for
+ * "Levi's Stadium", "ATT Stadium" for "AT&T Stadium". Both the stored venue
+ * tokens and the fan's message are normalized the same way before matching.
+ */
+function normalizeForMatching(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function venueMatchTokens(venue: Venue): string[] {
   const raw = [venue.name, venue.city, ...venue.city.split(/[()/,]/)];
-  return raw.map((token) => token.trim().toLowerCase()).filter((token) => token.length >= 4);
+  return raw.map((token) => normalizeForMatching(token)).filter((token) => token.length >= 4);
 }
 
 function findVenueFromText(lowerText: string): Venue | undefined {
-  return VENUES.find((venue) => venueMatchTokens(venue).some((token) => lowerText.includes(token)));
+  const normalizedText = normalizeForMatching(lowerText);
+  return VENUES.find((venue) => venueMatchTokens(venue).some((token) => normalizedText.includes(token)));
 }
 
 function suggestVenueList(): string {
@@ -116,8 +141,7 @@ export function generateFallbackResponse(userMessage: string): FallbackResult {
     }
     default: {
       return {
-        finalText:
-          `You're near ${venue.name} in ${venue.city}. I can help with the least crowded gate, accessibility services, transport and parking, or low-emission travel options -- what would be most useful?${heatNote}`,
+        finalText: `You're near ${venue.name} in ${venue.city}. I can help with the least crowded gate, accessibility services, transport and parking, or low-emission travel options -- what would be most useful?${heatNote}`,
         matchedVenueId: venue.id,
         intent,
       };
@@ -146,7 +170,9 @@ export function generateFallbackOpsBriefing(venueId: string): string[] {
     const alt = calmGates[0];
     bullets.push(
       `Gate ${worst.gateId} is at ${worst.densityLevel} density (${worst.densityPct}%).` +
-        (alt ? ` Redirect incoming fans toward Gate ${alt.gateId} (${alt.densityLevel}, ${alt.densityPct}%).` : ''),
+        (alt
+          ? ` Redirect incoming fans toward Gate ${alt.gateId} (${alt.densityLevel}, ${alt.densityPct}%).`
+          : ''),
     );
   } else {
     bullets.push('All gates are currently at low or moderate density. No redirection needed.');
@@ -155,15 +181,21 @@ export function generateFallbackOpsBriefing(venueId: string): string[] {
   const transport = getTransportSnapshot(venueId);
   if (transport) {
     if (transport.transitStatus !== 'normal') {
-      bullets.push(`Transit status: ${transport.transitStatus.replace('_', ' ')}. Consider messaging fans to allow extra time.`);
+      bullets.push(
+        `Transit status: ${transport.transitStatus.replace('_', ' ')}. Consider messaging fans to allow extra time.`,
+      );
     }
     if (transport.parkingOccupancyPct >= 85) {
-      bullets.push(`Parking is ${transport.parkingOccupancyPct}% full. Consider opening overflow parking or boosting shuttle frequency.`);
+      bullets.push(
+        `Parking is ${transport.parkingOccupancyPct}% full. Consider opening overflow parking or boosting shuttle frequency.`,
+      );
     }
   }
 
   if (isHeatAdvisoryActive(venueId)) {
-    bullets.push(`Heat/altitude advisory active at ${venue.name}. Increase hydration station staffing and signage.`);
+    bullets.push(
+      `Heat/altitude advisory active at ${venue.name}. Increase hydration station staffing and signage.`,
+    );
   }
 
   return bullets.slice(0, 5);
