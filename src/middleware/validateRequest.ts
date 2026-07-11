@@ -32,6 +32,7 @@ export function validateParams(schema: ZodTypeAny) {
       });
       return;
     }
+    req.params = parsed.data;
     next();
   };
 }

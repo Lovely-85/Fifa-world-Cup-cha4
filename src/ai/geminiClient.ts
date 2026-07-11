@@ -20,6 +20,24 @@ import { logger } from '../utils/logger';
 const REQUEST_TIMEOUT_MS = 12_000;
 const MAX_TOOL_ROUNDS = 3;
 
+/**
+ * Named constants for the Interactions API's wire-format discriminator
+ * strings. Referencing `STEP_TYPE.FUNCTION_CALL` instead of the bare string
+ * `'function_call'` everywhere means a typo becomes a compile-time "property
+ * does not exist" error instead of a silently-wrong string that only fails
+ * at runtime against the real API.
+ */
+const STEP_TYPE = {
+  USER_INPUT: 'user_input',
+  FUNCTION_CALL: 'function_call',
+  FUNCTION_RESULT: 'function_result',
+  MODEL_OUTPUT: 'model_output',
+} as const;
+
+const CONTENT_TYPE = {
+  TEXT: 'text',
+} as const;
+
 let client: GoogleGenAI | null = null;
 
 function getClient(): GoogleGenAI {
@@ -77,17 +95,17 @@ interface InteractionLike {
  * module.
  */
 interface TextBlock {
-  type: 'text';
+  type: typeof CONTENT_TYPE.TEXT;
   text: string;
 }
 
 interface UserInputStep {
-  type: 'user_input';
+  type: typeof STEP_TYPE.USER_INPUT;
   content: TextBlock[];
 }
 
 interface FunctionResultRequestStep {
-  type: 'function_result';
+  type: typeof STEP_TYPE.FUNCTION_RESULT;
   name: string;
   call_id: string;
   is_error: boolean;
@@ -104,9 +122,9 @@ function extractFinalText(interaction: InteractionLike): string {
   // if a future SDK version ever omits it, reconstruct from model_output
   // step content blocks rather than failing outright.
   const textFromSteps = (interaction.steps ?? [])
-    .filter((step) => step.type === 'model_output')
+    .filter((step) => step.type === STEP_TYPE.MODEL_OUTPUT)
     .flatMap((step) => step.content ?? [])
-    .filter((block) => block.type === 'text' && typeof block.text === 'string')
+    .filter((block) => block.type === CONTENT_TYPE.TEXT && typeof block.text === 'string')
     .map((block) => block.text as string)
     .join(' ')
     .trim();
@@ -186,7 +204,7 @@ export async function runFanAssistantTurn(
   const toolCalls: ToolCallLogEntry[] = [];
 
   let history: ConversationStep[] = [
-    { type: 'user_input', content: [{ type: 'text', text: combinedInput }] },
+    { type: STEP_TYPE.USER_INPUT, content: [{ type: CONTENT_TYPE.TEXT, text: combinedInput }] },
   ];
   let interaction: InteractionLike | null = null;
 
@@ -195,7 +213,9 @@ export async function runFanAssistantTurn(
 
     history = [...history, ...(interaction.steps ?? [])];
 
-    const functionCallSteps = (interaction.steps ?? []).filter((step) => step.type === 'function_call');
+    const functionCallSteps = (interaction.steps ?? []).filter(
+      (step) => step.type === STEP_TYPE.FUNCTION_CALL,
+    );
     if (functionCallSteps.length === 0) {
       break;
     }
@@ -208,11 +228,16 @@ export async function runFanAssistantTurn(
         logger.warn('Tool execution returned an error', { tool: toolName, error: result.error });
       }
       history.push({
-        type: 'function_result',
+        type: STEP_TYPE.FUNCTION_RESULT,
         name: toolName,
         call_id: step.id ?? step.call_id ?? toolName,
         is_error: !result.ok,
-        result: [{ type: 'text', text: JSON.stringify(result.ok ? result.data : { error: result.error }) }],
+        result: [
+          {
+            type: CONTENT_TYPE.TEXT,
+            text: JSON.stringify(result.ok ? result.data : { error: result.error }),
+          },
+        ],
       });
     }
   }

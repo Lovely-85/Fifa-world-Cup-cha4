@@ -166,7 +166,9 @@ export function generateFallbackOpsBriefing(venueId: string): string[] {
     .sort((a, b) => a.densityPct - b.densityPct);
 
   if (hotGates.length > 0) {
-    const worst = hotGates.sort((a, b) => b.densityPct - a.densityPct)[0];
+    const worst = hotGates.reduce((current, candidate) =>
+      candidate.densityPct > current.densityPct ? candidate : current,
+    );
     const alt = calmGates[0];
     bullets.push(
       `Gate ${worst.gateId} is at ${worst.densityLevel} density (${worst.densityPct}%).` +

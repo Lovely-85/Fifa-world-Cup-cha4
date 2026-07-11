@@ -228,7 +228,7 @@ export function getAccessibilityInfo(venueId: string, now: number = Date.now()):
     accessibleSeatingNote:
       'Accessible and companion seating is located on the main concourse level, adjacent to every gate.',
     sensoryRoomAvailable: true,
-    wheelchairRentalGate: venue.gateIds[0],
+    wheelchairRentalGate: venue.gateIds[0] ?? 'A',
     gateElevatorStatus,
   };
 }

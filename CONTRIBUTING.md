@@ -23,7 +23,11 @@ All five run automatically in CI (`.github/workflows/ci.yml`) on every push and 
 
 ## Code style
 
-This project follows the [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html) where practical for an Express/Node codebase of this size — notably: avoid `any`/unsafe assertions in favor of precise local types with a single justified, commented boundary cast where an external SDK's types aren't public; document all top-level exports; prefer simplicity a reviewer can hold in their head over cleverness. Formatting is enforced by Prettier (`.prettierrc.json`) rather than debated in review.
+This project follows the [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html) where practical for an Express/Node codebase of this size — notably: avoid `any`/unsafe assertions in favor of precise local types with a single justified, commented boundary cast where an external SDK's types aren't public; document all top-level exports; prefer simplicity a reviewer can hold in their head over cleverness. Formatting is enforced by Prettier (`.prettierrc.json`) and `.editorconfig` rather than debated in review.
+
+`tsconfig.json` enables `noUncheckedIndexedAccess` and `noPropertyAccessFromIndexSignature` on top of `strict`. If one of these flags complains about a new array/object access, fix the access properly (a bounds check, `??` with a real default, or restructuring to avoid indexing at all, e.g. `Array.prototype.reduce` instead of `sort(...)[0]`) rather than asserting the value is defined with `!`.
+
+Prefer a named constant over a repeated string literal for anything that has to match an external wire format exactly (see `STEP_TYPE/CONTENT_TYPE` in `src/ai/geminiClient.ts`) — a typo in `SOME_CONSTANT.FOO` is a compile error; a typo in a bare string repeated in three places is a silent runtime bug.
 
 ## Design principles specific to this repo
 

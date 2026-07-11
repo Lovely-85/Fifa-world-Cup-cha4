@@ -9,7 +9,12 @@ export const opsRouter = Router();
 
 opsRouter.get('/:venueId/insight', validateParams(venueParamSchema), async (req, res, next) => {
   try {
-    const insight = await getOpsInsight(req.params.venueId);
+    // validateParams has already confirmed req.params matches venueParamSchema
+    // and rejected the request with 400 otherwise; re-parsing here (cheap for
+    // a one-field object) gives a precisely-typed `venueId: string` instead
+    // of Express's untyped params index signature.
+    const { venueId } = venueParamSchema.parse(req.params);
+    const insight = await getOpsInsight(venueId);
     res.json(insight);
   } catch (error) {
     next(error);

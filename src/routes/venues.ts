@@ -23,7 +23,9 @@ venuesRouter.get('/', (_req, res) => {
 });
 
 venuesRouter.get('/:venueId/status', validateParams(venueParamSchema), (req, res) => {
-  const { venueId } = req.params;
+  // See the comment in routes/ops.ts: re-parsing gives a precisely-typed
+  // `venueId: string` instead of Express's untyped params index signature.
+  const { venueId } = venueParamSchema.parse(req.params);
   const venue = findVenue(venueId);
   if (!venue) {
     res.status(404).json({ error: `Unknown venue "${venueId}".` });
