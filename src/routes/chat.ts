@@ -1,3 +1,6 @@
+/**
+ * @fileoverview POST /api/chat -- the fan-facing conversational endpoint.
+ */
 import { Router } from 'express';
 import { z } from 'zod';
 import { validateBody } from '../middleware/validateRequest';

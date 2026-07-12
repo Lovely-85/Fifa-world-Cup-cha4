@@ -1,3 +1,7 @@
+/**
+ * @fileoverview GET /api/ops/:venueId/insight -- the staff/volunteer
+ * operational-intelligence briefing endpoint.
+ */
 import { Router } from 'express';
 import { z } from 'zod';
 import { validateParams } from '../middleware/validateRequest';

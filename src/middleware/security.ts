@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Security middleware: response headers (helmet CSP), CORS
+ * allowlist, and rate limiting for the AI-backed endpoints.
+ */
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';

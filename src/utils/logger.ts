@@ -1,10 +1,10 @@
 /**
- * Minimal structured logger. Deliberately dependency-free: for a project
- * this size, pulling in winston/pino adds bundle weight and configuration
- * surface without a proportional benefit. Never logs secrets (API keys are
- * never passed through the logger) and truncates free-text user input
- * before logging it, so chat messages can't blow up log storage or leak
- * excessive personal data into logs.
+ * @fileoverview Minimal structured logger. Deliberately dependency-free:
+ * for a project this size, pulling in winston/pino adds bundle weight and
+ * configuration surface without a proportional benefit. Never logs secrets
+ * (API keys are never passed through the logger) and truncates free-text
+ * user input before logging it, so chat messages can't blow up log storage
+ * or leak excessive personal data into logs.
  */
 
 type LogLevel = 'info' | 'warn' | 'error';

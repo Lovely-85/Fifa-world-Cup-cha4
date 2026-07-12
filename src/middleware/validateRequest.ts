@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Generic zod-based request validation middleware factories
+ * for request bodies and route params.
+ */
 import type { NextFunction, Request, Response } from 'express';
 import type { ZodTypeAny } from 'zod';
 

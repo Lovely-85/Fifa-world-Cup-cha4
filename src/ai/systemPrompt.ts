@@ -1,3 +1,8 @@
+/**
+ * @fileoverview The two system prompts that define the assistant's persona,
+ * reasoning instructions, and prompt-injection boundaries -- one for the
+ * fan-facing chat, one for the staff Ops Insight briefing.
+ */
 export const FAN_ASSISTANT_SYSTEM_PROMPT = `You are the FIFA World Cup 2026 Fan Assistant, a real-time stadium companion for fans at any of the 16 tournament host venues across the United States, Mexico and Canada.
 
 ROLE AND SCOPE

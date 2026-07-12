@@ -1,12 +1,8 @@
-import { GoogleGenAI } from '@google/genai';
-import { env } from '../config/env';
-import { executeTool, TOOL_DECLARATIONS } from './tools';
-import { logger } from '../utils/logger';
-
 /**
- * Thin, testable wrapper around the Gemini API's Interactions endpoint
- * (client.interactions.create), implementing the documented stateless
- * function-calling loop: https://ai.google.dev/gemini-api/docs/function-calling
+ * @fileoverview Thin, testable wrapper around the Gemini API's Interactions
+ * endpoint (client.interactions.create), implementing the documented
+ * stateless function-calling loop:
+ * https://ai.google.dev/gemini-api/docs/function-calling
  *
  * Design choices, both deliberate:
  *  - `store: false` on every call: no fan conversation is retained on
@@ -16,6 +12,10 @@ import { logger } from '../utils/logger';
  *    API call must never be allowed to hang a request indefinitely or loop
  *    forever, regardless of what the model decides to do.
  */
+import { GoogleGenAI } from '@google/genai';
+import { env } from '../config/env';
+import { executeTool, TOOL_DECLARATIONS } from './tools';
+import { logger } from '../utils/logger';
 
 const REQUEST_TIMEOUT_MS = 12_000;
 const MAX_TOOL_ROUNDS = 3;

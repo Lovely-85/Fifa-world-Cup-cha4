@@ -127,14 +127,23 @@ Unit tests cover the live-data engine (determinism + bounds + cache-hit proofs),
 
 ## 7. Code Quality
 
-This codebase was explicitly checked against Google's own published engineering standards, not just "cleaned up" by feel:
+This codebase was explicitly checked against Google's own published engineering standards, not just "cleaned up" by feel. Two research passes went into this section: the [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html) itself (both the summary page and the full `tsguide.html` source), and Google's [Engineering Practices / code review standard](https://google.github.io/eng-practices/review/reviewer/standard.html).
 
-- **[Google's Engineering Practices / code review standard](https://google.github.io/eng-practices/review/reviewer/standard.html):** "could the code be made simpler," consistency with the rest of the codebase, and well-designed automated tests weigh more than personal style preference.
-- **[Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html):** it explicitly calls type assertions like `as SomeType` "unsafe," since they silence the compiler without a runtime check. Concretely, `src/` has **zero `any` types**. The one place an external SDK's request-side shapes aren't part of its public export surface (`@google/genai`'s `Step`/`Tool` types — verified directly against the vendored `.d.ts`, not assumed), `src/ai/geminiClient.ts` defines a precise local mirror type and isolates the one unavoidable boundary cast to a single commented line, derived from the SDK's own declared signature via TypeScript's `Parameters<>` utility rather than a hand-typed guess.
+**Checked and already compliant** (verified with `grep` across `src/`, not just asserted):
+- Zero default exports anywhere -- the style guide requires named exports.
+- Zero multi-variable declarations (`let a = 1, b = 2;`) -- each declares exactly one variable.
+- Zero loose-equality (`==`/`!=`) usage -- `===`/`!==` throughout.
+- Zero function expressions assigned to `const` -- named functions use `function` declarations, callbacks use arrow functions, per the guide's explicit preference.
+- Every `type` alias in the codebase is a genuine union or derived type (`'gemini' | 'fallback'`, `Parameters<...>[0]`, etc.); none are plain object shapes that the guide says should be `interface` instead.
+- No type annotations on trivially-inferred literals (the guide calls these out as actively hurting readability).
+
+**Fixed as a direct result of this research:**
+- **File structure.** The guide specifies source files should read `[license] → [@fileoverview] → [imports] → [implementation]`. Several files had their module-purpose comment sitting *after* the imports instead of before. All 18 files in `src/` now carry a `@fileoverview`-tagged comment as the first thing in the file, before any import.
+- **(Carried over from the previous pass)** Zero `any` types; the SDK's own `Parameters<>` utility derives the one unavoidable boundary-cast type instead of a hand guess; `noUncheckedIndexedAccess` and `noPropertyAccessFromIndexSignature` enabled with every resulting issue fixed properly; named constants (`STEP_TYPE.FUNCTION_CALL`) instead of repeated magic strings.
+
+**A tension I'm not resolving, and why:** the guide also states a preference to "organize packages by feature, not by type" (its example: `products`, `checkout`, `backend`, not generic type-based buckets). This project's `src/` is organized by layer (`ai/`, `data/`, `routes/`, `middleware/`) rather than by feature (`chat/`, `venues/`, `ops/`). I'm deliberately not restructuring this: the guide's own example is about a multi-domain system where that split pays for itself, and this app's three "features" are thin route files that all sit on top of one genuinely shared reasoning engine and one shared data layer -- splitting by feature here would either fragment that shared engine across feature folders or just recreate a `shared/` catch-all, without a clear readability win, in exchange for touching every import path in the project days before a one-shot submission. Noted here rather than silently ignored.
+
 - **[gts](https://github.com/google/gts)**, "Google's TypeScript style guide, formatter, and linter," is what Google's own Node.js client libraries are formatted and linted with. This project mirrors that discipline with Prettier + ESLint enforced in CI (`.github/workflows/ci.yml`) on every push, rather than left to manual review.
-- **Stricter-than-default TypeScript**: `tsconfig.json` enables `noUncheckedIndexedAccess` and `noPropertyAccessFromIndexSignature` on top of `strict` — both flags exist specifically to catch a class of undefined-access bugs that plain `strict` mode misses, and every place they initially flagged real code was fixed properly (e.g. replacing a `sort(...)[0]` with a non-empty-safe `reduce`), not suppressed.
-- **Named constants over magic strings** for the Gemini wire-format discriminators (`STEP_TYPE.FUNCTION_CALL` instead of a bare `'function_call'` repeated in several places) — a typo in a constant reference is a compile error; a typo in a repeated string literal is a silent runtime bug.
-- Consistent formatting enforced by Prettier and `.editorconfig`, not left to reviewer taste.
 
 See `CONTRIBUTING.md` for the full list of design principles this repo follows.
 

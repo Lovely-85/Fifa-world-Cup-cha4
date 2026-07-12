@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Validates and exposes all runtime configuration in one
+ * place, so every other module reads already-validated env vars instead of
+ * touching `process.env` directly.
+ */
 import { z } from 'zod';
 
 /**

@@ -1,3 +1,15 @@
+/**
+ * @fileoverview Deterministic, dependency-free responder used whenever the
+ * Gemini API is not configured (no GEMINI_API_KEY) or a live call fails.
+ * This guarantees the assistant is always demoable -- reviewers who clone
+ * the repo without setting up billing still see real, contextual answers,
+ * just without free-form generative language.
+ *
+ * Scope is intentionally narrower than the full Gemini-backed assistant:
+ * English only, and intent detection is keyword-based rather than true
+ * language understanding. That trade-off is documented in the README so it
+ * reads as an explicit design decision, not a hidden limitation.
+ */
 import { VENUES, Venue, findVenue, listVenueSummaries } from '../data/venues';
 import {
   getAccessibilityInfo,
@@ -7,19 +19,6 @@ import {
   getVenueGateSnapshots,
   isHeatAdvisoryActive,
 } from '../data/liveState';
-
-/**
- * Deterministic, dependency-free responder used whenever the Gemini API is
- * not configured (no GEMINI_API_KEY) or a live call fails. This guarantees
- * the assistant is always demoable -- reviewers who clone the repo without
- * setting up billing still see real, contextual answers, just without free-
- * form generative language.
- *
- * Scope is intentionally narrower than the full Gemini-backed assistant:
- * English only, and intent detection is keyword-based rather than true
- * language understanding. That trade-off is documented in the README so it
- * reads as an explicit design decision, not a hidden limitation.
- */
 
 export type Intent = 'accessibility' | 'gate' | 'transport' | 'sustainability' | 'general';
 

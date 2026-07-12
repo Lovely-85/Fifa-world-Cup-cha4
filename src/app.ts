@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Assembles the Express application: security middleware,
+ * static frontend, and the three feature routes (chat, venues, ops).
+ */
 import express, { type Express } from 'express';
 import path from 'path';
 import compression from 'compression';

@@ -1,7 +1,5 @@
-import { findVenue } from './venues';
-
 /**
- * Simulated "live" stadium data.
+ * @fileoverview Simulated "live" stadium data.
  *
  * There is no public real-time feed for FIFA World Cup 2026 gate-level
  * crowd density, so this module deterministically DERIVES plausible,
@@ -20,6 +18,7 @@ import { findVenue } from './venues';
  * require changing any calling code, since the exported function
  * signatures are the integration seam.
  */
+import { findVenue } from './venues';
 
 export type DensityLevel = 'low' | 'moderate' | 'high' | 'critical';
 

@@ -29,6 +29,8 @@ This project follows the [Google TypeScript Style Guide](https://google.github.i
 
 Prefer a named constant over a repeated string literal for anything that has to match an external wire format exactly (see `STEP_TYPE/CONTENT_TYPE` in `src/ai/geminiClient.ts`) — a typo in `SOME_CONSTANT.FOO` is a compile error; a typo in a bare string repeated in three places is a silent runtime bug.
 
+Every file in `src/` starts with a `/** @fileoverview ... */` comment before any import, per the Google TypeScript Style Guide's documented file structure (`[license] → [@fileoverview] → [imports] → [implementation]`). New files should follow the same order.
+
 ## Design principles specific to this repo
 
 - **Graceful degradation is not optional.** Every AI-backed code path (`src/ai/assistantService.ts`) must have a deterministic fallback and must never throw an unhandled error back to an HTTP caller.

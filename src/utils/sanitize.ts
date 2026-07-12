@@ -1,5 +1,5 @@
 /**
- * Security-focused text utilities.
+ * @fileoverview Security-focused text utilities.
  *
  * These are defense-in-depth measures, not a substitute for the structural
  * defenses that matter most: keeping user text in its own message role

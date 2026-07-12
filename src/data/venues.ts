@@ -1,5 +1,6 @@
 /**
- * Static, factual reference data about FIFA World Cup 2026 host venues.
+ * @fileoverview Static, factual reference data about FIFA World Cup 2026
+ * host venues.
  *
  * Source: publicly announced FIFA World Cup 2026 host city / stadium list
  * (16 venues across the United States, Mexico and Canada). Gate layouts,

@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Process entrypoint: loads .env, builds the app, and starts
+ * the HTTP listener. Kept separate from app.ts so tests never bind a real
+ * port (see app.ts's own file overview).
+ */
 import 'dotenv/config';
 import { createApp } from './app';
 import { env, isGeminiConfigured } from './config/env';

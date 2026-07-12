@@ -1,3 +1,7 @@
+/**
+ * @fileoverview GET /api/venues and /api/venues/:venueId/status -- static
+ * venue reference data plus live (simulated) per-venue status.
+ */
 import { Router } from 'express';
 import { z } from 'zod';
 import { validateParams } from '../middleware/validateRequest';

@@ -1,3 +1,9 @@
+/**
+ * @fileoverview Orchestration layer. This is the ONLY module the HTTP routes
+ * talk to for AI behaviour, and it is deliberately responsible for the
+ * Gemini-unavailable / Gemini-failed graceful degradation, so that failure
+ * mode lives in exactly one place rather than being duplicated per route.
+ */
 import { isGeminiConfigured } from '../config/env';
 import { runFanAssistantTurn, runSimpleCompletion } from './geminiClient';
 import { generateFallbackOpsBriefing, generateFallbackResponse } from './fallbackEngine';
@@ -5,13 +11,6 @@ import { FAN_ASSISTANT_SYSTEM_PROMPT, OPS_INSIGHT_SYSTEM_PROMPT } from './system
 import { logger } from '../utils/logger';
 import { findVenue } from '../data/venues';
 import { getTransportSnapshot, getVenueGateSnapshots, isHeatAdvisoryActive } from '../data/liveState';
-
-/**
- * Orchestration layer. This is the ONLY module the HTTP routes talk to for
- * AI behaviour, and it is deliberately responsible for the
- * Gemini-unavailable / Gemini-failed graceful degradation, so that failure
- * mode lives in exactly one place rather than being duplicated per route.
- */
 
 export type AssistantMode = 'gemini' | 'fallback';
 

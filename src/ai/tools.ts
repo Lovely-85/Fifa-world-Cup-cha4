@@ -1,3 +1,13 @@
+/**
+ * @fileoverview The model's ENTIRE capability surface is this fixed set of
+ * read-only, schema-validated functions over local in-memory simulated
+ * state. There is no filesystem, network, shell, or database access exposed
+ * to the model, and every argument the model supplies is validated with zod
+ * before it touches any application logic. This is the primary defense
+ * against prompt injection: even a fully "jailbroken" model response can
+ * only ever call one of these seven functions with well-typed arguments --
+ * there is no dangerous action for it to take.
+ */
 import { z } from 'zod';
 import { findVenue, listVenueSummaries } from '../data/venues';
 import {
@@ -8,17 +18,6 @@ import {
   getTransportSnapshot,
   isHeatAdvisoryActive,
 } from '../data/liveState';
-
-/**
- * The model's ENTIRE capability surface is this fixed set of read-only,
- * schema-validated functions over local in-memory simulated state. There is
- * no filesystem, network, shell, or database access exposed to the model,
- * and every argument the model supplies is validated with zod before it
- * touches any application logic. This is the primary defense against
- * prompt injection: even a fully "jailbroken" model response can only ever
- * call one of these seven functions with well-typed arguments -- there is
- * no dangerous action for it to take.
- */
 
 // ---------------------------------------------------------------------------
 // Function declarations, in the shape the Gemini API function-calling
