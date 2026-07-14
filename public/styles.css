@@ -1,0 +1,501 @@
+/* ===========================================================================
+   Design system: "Concourse Signage"
+   Grounded in real stadium wayfinding: floodlit night concourses, lettered
+   gates, and traffic-light density signage. Colour carries meaning (green /
+   amber / red map to live crowd status everywhere in the app, never used
+   decoratively) rather than serving as a single brand accent.
+   =========================================================================== */
+
+:root {
+  /* Named palette */
+  --concourse-navy: #0b1220; /* base background: stadium at night */
+  --concourse-panel: #16202e; /* raised surface / card */
+  --concourse-panel-alt: #1c2836;
+  --chalk: #f5f7fa; /* primary text */
+  --chalk-dim: #a9b4c4; /* secondary text */
+  --touchline-green: #1e8f5e; /* status: good / low density */
+  --touchline-green-bright: #2fbd85;
+  --floodlight-amber: #f2a93b; /* status: caution / moderate-high density */
+  --alert-red: #e5484d; /* status: critical density only */
+  --hairline: #2a3547;
+
+  --font-display: 'Archivo Black', 'Arial Black', sans-serif;
+  --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-data: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-full: 999px;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--concourse-navy);
+  color: var(--chalk);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--touchline-green);
+  color: var(--concourse-navy);
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  z-index: 100;
+  border-radius: 0 0 var(--radius-sm) 0;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+a {
+  color: var(--touchline-green-bright);
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--floodlight-amber);
+  outline-offset: 2px;
+}
+
+/* ---------------------------------------------------------------------------
+   Top bar
+   --------------------------------------------------------------------------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid var(--hairline);
+  background: linear-gradient(180deg, var(--concourse-panel) 0%, var(--concourse-navy) 100%);
+}
+
+.eyebrow {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--touchline-green-bright);
+  margin: 0 0 0.15rem;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.venue-select {
+  background: var(--concourse-panel-alt);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  color: var(--chalk);
+  padding: 0.55rem 0.7rem;
+  min-width: 0;
+  max-width: 52vw;
+}
+
+.mode-badge {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--hairline);
+  color: var(--chalk-dim);
+  white-space: nowrap;
+}
+
+.mode-badge[data-mode='gemini'] {
+  border-color: var(--touchline-green);
+  color: var(--touchline-green-bright);
+}
+
+.mode-badge[data-mode='fallback'] {
+  border-color: var(--floodlight-amber);
+  color: var(--floodlight-amber);
+}
+
+/* ---------------------------------------------------------------------------
+   Status strip: scoreboard-style live gate readout
+   --------------------------------------------------------------------------- */
+
+.status-strip {
+  display: flex;
+  gap: 0.6rem;
+  overflow-x: auto;
+  padding: 0.85rem 1.1rem;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--concourse-navy);
+}
+
+.gate-chip {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--concourse-panel);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-full);
+  padding: 0.35rem 0.7rem 0.35rem 0.35rem;
+}
+
+.gate-letter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  color: var(--concourse-navy);
+  background: var(--chalk-dim);
+  flex: none;
+}
+
+.gate-letter[data-level='low'] {
+  background: var(--touchline-green-bright);
+}
+
+.gate-letter[data-level='moderate'] {
+  background: var(--floodlight-amber);
+}
+
+.gate-letter[data-level='high'],
+.gate-letter[data-level='critical'] {
+  background: var(--alert-red);
+  color: var(--chalk);
+}
+
+.gate-letter[data-level='critical'] {
+  animation: pulse-ring 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(229, 72, 77, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(229, 72, 77, 0);
+  }
+}
+
+.gate-meta {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--chalk-dim);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Chat
+   --------------------------------------------------------------------------- */
+
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.msg {
+  max-width: 88%;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  animation: msg-in 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .msg,
+  .gate-letter[data-level='critical'] {
+    animation: none !important;
+  }
+}
+
+@keyframes msg-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.msg.fan {
+  align-self: flex-end;
+  background: var(--concourse-panel-alt);
+  border: 1px solid var(--hairline);
+  border-bottom-right-radius: 2px;
+}
+
+.msg.assistant {
+  align-self: flex-start;
+  background: var(--concourse-panel);
+  border: 1px solid var(--touchline-green);
+  border-bottom-left-radius: 2px;
+  position: relative;
+  padding-left: 1.4rem;
+}
+
+.msg.assistant::before {
+  content: '\2192';
+  position: absolute;
+  left: 0.5rem;
+  color: var(--touchline-green-bright);
+  font-weight: 700;
+}
+
+.msg.system {
+  align-self: center;
+  color: var(--chalk-dim);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  background: none;
+  border: none;
+  text-align: center;
+}
+
+.gate-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.3rem;
+  border-radius: 50%;
+  background: var(--touchline-green);
+  color: var(--concourse-navy);
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-size: 0.75rem;
+  margin: 0 0.1rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Quick actions + composer
+   --------------------------------------------------------------------------- */
+
+.quick-actions {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0 1.1rem 0.6rem;
+}
+
+.quick-action {
+  flex: 0 0 auto;
+  background: var(--concourse-panel-alt);
+  border: 1px solid var(--hairline);
+  color: var(--chalk);
+  border-radius: var(--radius-full);
+  padding: 0.45rem 0.85rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.quick-action:hover {
+  border-color: var(--touchline-green);
+}
+
+.composer {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.85rem 1.1rem 1.1rem;
+  border-top: 1px solid var(--hairline);
+  background: var(--concourse-panel);
+}
+
+.composer textarea {
+  flex: 1;
+  resize: none;
+  background: var(--concourse-navy);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  color: var(--chalk);
+  padding: 0.65rem 0.8rem;
+  min-height: 2.7rem;
+  max-height: 8rem;
+}
+
+.send-btn {
+  background: var(--touchline-green);
+  color: var(--concourse-navy);
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  padding: 0 1.1rem;
+  cursor: pointer;
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: var(--touchline-green-bright);
+}
+
+.accessibility-bar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 1.1rem;
+  border-top: 1px solid var(--hairline);
+  font-size: 0.75rem;
+  color: var(--chalk-dim);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.accessibility-bar button {
+  background: none;
+  border: 1px solid var(--hairline);
+  color: var(--chalk-dim);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.55rem;
+  cursor: pointer;
+}
+
+.accessibility-bar button[aria-pressed='true'] {
+  border-color: var(--touchline-green);
+  color: var(--touchline-green-bright);
+}
+
+body.high-contrast {
+  --concourse-panel: #000000;
+  --concourse-panel-alt: #101010;
+  --hairline: #ffffff;
+  --chalk-dim: #ffffff;
+}
+
+body.large-text {
+  font-size: 19px;
+}
+
+/* ---------------------------------------------------------------------------
+   Ops / control-room view
+   --------------------------------------------------------------------------- */
+
+.ops-grid {
+  padding: 1rem 1.1rem 2rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.ops-card {
+  background: var(--concourse-panel);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: 0.9rem 1rem;
+}
+
+.ops-card h2 {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  margin: 0 0 0.6rem;
+}
+
+.ops-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-data);
+  font-size: 0.85rem;
+}
+
+.ops-table th,
+.ops-table td {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.briefing-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.briefing-list li {
+  margin-bottom: 0.4rem;
+}
+
+.refresh-btn {
+  background: var(--concourse-panel-alt);
+  border: 1px solid var(--touchline-green);
+  color: var(--touchline-green-bright);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.venue-link-row {
+  padding: 0 1.1rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+@media (min-width: 720px) {
+  .msg {
+    max-width: 65%;
+  }
+  .ops-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
